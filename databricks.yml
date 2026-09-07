@@ -1,0 +1,22 @@
+bundle:
+  name: bkk-ai-assistant
+
+resources:
+  apps:
+    app:
+      name: "bkk-ai-assistant"
+      description: "A Databricks App powered by AppKit"
+      source_code_path: ./
+
+      # Start the app automatically on deploy.
+      lifecycle:
+        started: true
+      # Uncomment to enable on behalf of user API scopes. Available scopes: sql, dashboards.genie, files.files, serving.serving-endpoints
+      # user_api_scopes:
+      #   - sql
+
+targets:
+  default:
+    default: true
+    workspace:
+      host: https://dbc-095b518c-0a9b.cloud.databricks.com
