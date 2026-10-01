@@ -14,7 +14,7 @@ The goal of the proof of concept is to provide employees with concise answers th
 
 The deployed Databricks application provides a simple employee-facing interface for submitting questions and displaying grounded answers together with their sources.
 
-![BKK Mitarbeiter-Assistent](docs/screenshots/03-frontend.png)
+![BKK Mitarbeiter-Assistent](docs/screenshots/03-frontend-final.png)
 
 ### n8n Workflow
 
@@ -304,7 +304,7 @@ bkk-ai-assistant/
 │   └── screenshots/
 │       ├── 01-n8n-workflow.png
 │       ├── 02-successful-execution.png
-│       └── 03-frontend.png
+│       └── 03-frontend-final.png
 │
 ├── app.yaml                         # Databricks App configuration
 ├── databricks.yml                   # Databricks Asset Bundle configuration
@@ -498,7 +498,7 @@ The GitHub repository contains the following implementation evidence:
 ```text
 docs/screenshots/01-n8n-workflow.png
 docs/screenshots/02-successful-execution.png
-docs/screenshots/03-frontend.png
+docs/screenshots/03-frontend-final.png
 ```
 
 The frontend screenshot demonstrates the deployed assistant, including the generated response and retrieved source references.
