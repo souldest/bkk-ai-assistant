@@ -2,7 +2,93 @@
 
 A full-stack AI assistant application built as a **Databricks App** using **Databricks AppKit, React, TypeScript, Express, and Tailwind CSS**.
 
-The project combines a modern React frontend with an Express backend and is designed to run and be deployed within a Databricks workspace.
+The project combines a modern React frontend with a TypeScript/Express backend and integrates **Databricks Vector Search, model serving endpoints, and a Retrieval-Augmented Generation (RAG) pipeline** to provide context-aware answers based on indexed documents.
+
+The application is designed to run and be deployed directly within a Databricks workspace.
+
+---
+
+## AI & RAG Architecture
+
+The core of the application is a Retrieval-Augmented Generation pipeline implemented with Databricks services.
+
+```text
+┌──────────────────────┐
+│     React Frontend   │
+│  TypeScript / Vite   │
+└──────────┬───────────┘
+           │ User Question
+           ▼
+┌──────────────────────┐
+│   Express Backend    │
+│  TypeScript / Node.js│
+└──────────┬───────────┘
+           │
+           ├──────────────────────────────┐
+           │                              │
+           ▼                              ▼
+┌──────────────────────┐      ┌─────────────────────────┐
+│ Databricks AppKit    │      │ MiniLM Embedding Model  │
+│ AI Search / Retrieval│      │ Serving Endpoint        │
+└──────────┬───────────┘      └────────────┬────────────┘
+           │                               │
+           │ Retrieved Context             │ Embeddings
+           └──────────────┬────────────────┘
+                          ▼
+               ┌─────────────────────────┐
+               │ Databricks GPT OSS 120B │
+               │ Model Serving Endpoint  │
+               └────────────┬────────────┘
+                            │
+                            ▼
+                  ┌───────────────────┐
+                  │ Answer + Sources  │
+                  └───────────────────┘
+```
+
+### RAG Pipeline
+
+1. **User question**
+   The user enters a question through the React frontend.
+
+2. **Document retrieval**
+   The Express backend sends the question to the Databricks AppKit AI Search service, which retrieves relevant document chunks from the configured Vector Search index.
+
+3. **Embeddings**
+   The application integrates with the Databricks `minilm-embedding` serving endpoint for text embeddings.
+
+4. **Context construction**
+   Retrieved document chunks are combined into a structured context for the language model.
+
+5. **LLM generation**
+   The context and user question are sent to the `databricks-gpt-oss-120b` serving endpoint.
+
+6. **Grounded response**
+   The model is instructed to answer based on the provided context and avoid inventing information that is not supported by the retrieved documents.
+
+7. **Sources**
+   The application returns source metadata together with the generated answer so that the user can see which document chunks contributed to the response.
+
+---
+
+## Key Features
+
+* Full-stack React + Express application
+* TypeScript across frontend and backend
+* Databricks App deployment
+* Retrieval-Augmented Generation (RAG)
+* Databricks Vector Search integration
+* Databricks AI Search / AppKit integration
+* MiniLM embedding model serving
+* Databricks GPT OSS 120B model serving
+* Context-grounded German responses
+* Source metadata displayed alongside answers
+* Explicit anti-hallucination prompt instructions
+* Databricks Asset Bundle configuration
+* Databricks App resource permissions
+* OAuth-based Databricks authentication support
+
+---
 
 ## Tech Stack
 
@@ -22,12 +108,22 @@ The project combines a modern React frontend with an Express backend and is desi
 * Express
 * TypeScript
 
+### AI & Data
+
+* Databricks Vector Search
+* Databricks AI Search / AppKit
+* Databricks Model Serving
+* MiniLM embeddings
+* Databricks GPT OSS 120B
+* Retrieval-Augmented Generation (RAG)
+
 ### Platform & Deployment
 
-* Databricks
-* Databricks AppKit
 * Databricks Apps
+* Databricks AppKit
 * Databricks Asset Bundles
+* Databricks CLI
+* Unity Catalog resources
 
 ---
 
@@ -35,186 +131,150 @@ The project combines a modern React frontend with an Express backend and is desi
 
 ```text
 bkk-ai-assistant/
-│
 ├── client/
-│   ├── src/                 # React application
-│   └── public/              # Static assets
+│   └── src/
+│       ├── components/
+│       ├── pages/
+│       ├── App.tsx
+│       └── ...
 │
 ├── server/
-│   ├── server.ts            # Express server entry point
-│   └── routes/              # Backend routes
+│   └── server.ts
 │
-├── shared/                  # Shared types and definitions
-├── scripts/                 # Utility scripts
-│
-├── app.yaml                 # Databricks App configuration
-├── databricks.yml           # Databricks Asset Bundle configuration
-├── appkit.plugins.json      # AppKit plugin configuration
-│
-├── .env.example             # Environment variable template
+├── app.yaml
+├── databricks.yml
 ├── package.json
-└── README.md
+├── README.md
+└── ...
 ```
+
+### Main Components
+
+**`client/`**
+React frontend responsible for the user interface and interaction with the assistant.
+
+**`server/server.ts`**
+Express backend containing the AI/RAG integration, Databricks service calls, prompt construction, and API handling.
+
+**`databricks.yml`**
+Databricks Asset Bundle configuration, including application resources and required permissions.
+
+**`app.yaml`**
+Databricks App configuration and environment variables.
+
+---
+
+## Databricks Resources
+
+The application is configured to work with the following Databricks resources:
+
+### Vector Search
+
+A Unity Catalog Vector Search index is used for document retrieval.
+
+```text
+workspace.healthcare_ai.document_chunks_index
+```
+
+The Databricks App is configured with the required `SELECT` permission for the resource.
+
+### Embedding Model
+
+The application uses the following Databricks Model Serving endpoint:
+
+```text
+minilm-embedding
+```
+
+The endpoint generates vector embeddings used by the retrieval pipeline.
+
+The current implementation expects **384-dimensional embeddings**.
+
+### Language Model
+
+The application uses:
+
+```text
+databricks-gpt-oss-120b
+```
+
+for response generation.
+
+The model receives the user's question together with retrieved document context and is instructed to remain grounded in that context.
 
 ---
 
 ## Prerequisites
 
-Before running the project locally, make sure you have:
+Before running or deploying the application, make sure the following are available:
 
-* **Node.js v22+**
-* **npm**
-* **Databricks CLI**
-* Access to a **Databricks workspace**
+* Node.js
+* npm
+* Databricks CLI
+* Access to a Databricks workspace
+* Appropriate Databricks permissions
+* Configured Databricks authentication
+* Required Vector Search resources
+* Required Model Serving endpoints
 
 ---
 
 ## Getting Started
 
-### 1. Install dependencies
+Clone the repository:
+
+```bash
+git clone https://github.com/souldest/bkk-ai-assistant.git
+cd bkk-ai-assistant
+```
+
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 2. Configure environment variables
-
-Create a local `.env` file from the provided template:
-
-```bash
-cp .env.example .env
-```
-
-Then configure the required environment variables.
-
-Example:
-
-```env
-DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
-DATABRICKS_APP_PORT=8000
-```
-
-Additional environment variables may be required depending on the enabled plugins and your Databricks configuration.
-
----
-
-## Development
-
-Start the application in development mode with hot reload:
-
-```bash
-npm run dev
-```
-
-The application will be available at the URL shown in the console.
-
----
-
-## Production Build
-
-Build the frontend and backend for production:
-
-```bash
-npm run build
-```
-
-The build generates:
-
-```text
-dist/server.js
-client/dist/
-```
-
-Start the production application with:
-
-```bash
-npm start
-```
+Depending on the project configuration, frontend and backend dependencies are handled through the project scripts.
 
 ---
 
 ## Databricks Authentication
 
-The Databricks CLI requires authentication to deploy and manage applications.
+The application is intended to run within a Databricks environment and can use Databricks authentication mechanisms supported by the Databricks CLI and SDK.
 
-### OAuth U2M
-
-For interactive browser-based authentication:
+For local development, configure a Databricks CLI profile:
 
 ```bash
-databricks auth login --host https://your-workspace.cloud.databricks.com
+databricks configure
 ```
 
-This opens the browser to complete authentication. The Databricks CLI stores the authentication configuration locally.
+OAuth-based authentication is recommended for current Databricks workflows.
 
-### Configuration Profiles
-
-Multiple workspaces can be configured using profiles:
-
-```ini
-[DEFAULT]
-host = https://dev-workspace.cloud.databricks.com
-
-[production]
-host = https://prod-workspace.cloud.databricks.com
-client_id = prod-client-id
-client_secret = prod-client-secret
-```
-
-A specific profile can then be used for deployment:
-
-```bash
-databricks bundle deploy --profile production
-```
-
-> **Security:** Personal Access Tokens (PATs) are legacy authentication. OAuth is recommended for improved security.
+Personal Access Tokens (PATs) are considered a legacy authentication approach and should generally be avoided for new setups where OAuth is available.
 
 ---
 
-## Deployment
+## Development
 
-The project uses **Databricks Asset Bundles** and **Databricks Apps** for deployment.
-
-### Configure the bundle
-
-Update `databricks.yml` with your Databricks workspace:
-
-```yaml
-targets:
-  default:
-    workspace:
-      host: https://your-workspace.cloud.databricks.com
-```
-
-Replace the placeholder values with your actual workspace and resource configuration.
-
-### Deploy the application
-
-Deploy the application with:
+Start the development environment using the configured npm scripts:
 
 ```bash
-databricks apps deploy
+npm run dev
 ```
 
-The deployment process validates the project, deploys the application, starts it, and outputs the application URL.
+The development setup provides the frontend and backend required to run the application locally.
 
-### Production deployment
+---
 
-Configure the production target in `databricks.yml` and deploy with:
+## Production Build
+
+Create a production build with:
 
 ```bash
-databricks apps deploy -t prod
+npm run build
 ```
 
-### Restart a stopped application
-
-Databricks Apps may stop after a period of inactivity.
-
-An existing application can be started again without redeploying:
-
-```bash
-databricks apps start <APP_NAME>
-```
+The resulting application can then be deployed as a Databricks App.
 
 ---
 
@@ -222,99 +282,172 @@ databricks apps start <APP_NAME>
 
 The project includes scripts for type checking, linting, and formatting.
 
-### Type checking
+Typical commands include:
 
 ```bash
 npm run typecheck
-```
-
-### Linting
-
-```bash
 npm run lint
-```
-
-Automatically fix linting issues where possible:
-
-```bash
-npm run lint:fix
-```
-
-### Formatting
-
-```bash
 npm run format
 ```
 
-Apply formatting automatically:
+These checks help maintain consistent TypeScript code quality across the frontend and backend.
+
+---
+
+## Deployment
+
+The project uses **Databricks Asset Bundles** for deployment configuration.
+
+The deployment configuration is defined in:
+
+```text
+databricks.yml
+```
+
+Deploy the application with:
 
 ```bash
-npm run format:fix
+databricks apps deploy
 ```
+
+For a specific target:
+
+```bash
+databricks apps deploy -t prod
+```
+
+After deployment, an application can be restarted with:
+
+```bash
+databricks apps start <APP_NAME>
+```
+
+The Databricks bundle configuration also defines the resources required by the application, including:
+
+* Vector Search resources
+* Model Serving permissions
+* Databricks App configuration
+
+---
+
+## Application Architecture
+
+The application follows a separation between presentation, backend orchestration, retrieval, and generation.
+
+```text
+                         User
+                          │
+                          ▼
+               ┌─────────────────────┐
+               │   React Frontend    │
+               │ TypeScript / Vite   │
+               └──────────┬──────────┘
+                          │
+                          │ HTTP
+                          ▼
+               ┌─────────────────────┐
+               │   Express Backend   │
+               │    server.ts        │
+               └──────────┬──────────┘
+                          │
+             ┌────────────┴────────────┐
+             │                         │
+             ▼                         ▼
+   ┌───────────────────┐    ┌────────────────────┐
+   │ AppKit AI Search  │    │ MiniLM Embeddings  │
+   │                   │    │ Model Serving      │
+   └─────────┬─────────┘    └────────────────────┘
+             │
+             │ Relevant chunks
+             ▼
+   ┌──────────────────────┐
+   │ Context + User Query │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ GPT OSS 120B Serving │
+   │ Endpoint             │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Answer + Source Data │
+   └──────────────────────┘
+```
+
+This architecture keeps the frontend focused on presentation while the backend coordinates retrieval, context preparation, model invocation, and response handling.
+
+---
+
+## Prompt & Grounding Strategy
+
+The backend uses a structured prompt designed for document-grounded responses.
+
+The model is instructed to:
+
+* Answer in German.
+* Use the retrieved context as the primary source of information.
+* Avoid fabricating information.
+* Clearly distinguish between information that is supported by the retrieved documents and information that is not available.
+* Keep different topics separated.
+* Provide an answer based on the available evidence rather than relying on unsupported assumptions.
+
+This approach is intended to reduce hallucinations and make the generated responses more transparent and traceable.
+
+---
+
+## Source Handling
+
+The application does not only return the generated answer.
+
+Retrieved source information is also passed back to the frontend and displayed to the user.
+
+The interface can show information such as:
+
+* Document ID
+* Retrieved chunk
+* Relevance information
+
+This provides additional transparency into the retrieval process and makes the RAG pipeline easier to inspect.
 
 ---
 
 ## Enabled Plugins
 
-The project currently includes the following application component:
+The project uses the following application plugin:
 
-### Server
+* Express HTTP server
 
-An **Express HTTP server** providing static file serving and Vite development mode.
-
-Additional AppKit plugins can be configured according to the project's Databricks environment.
-
----
-
-## Architecture
-
-The application is structured as a full-stack web application:
-
-```text
-┌─────────────────────────────┐
-│       React Frontend        │
-│                             │
-│ TypeScript · Vite           │
-│ Tailwind · shadcn/ui        │
-└──────────────┬──────────────┘
-               │
-               │ HTTP / API
-               ▼
-┌─────────────────────────────┐
-│       Express Backend       │
-│                             │
-│ Node.js · TypeScript        │
-└──────────────┬──────────────┘
-               │
-               ▼
-┌─────────────────────────────┐
-│         Databricks          │
-│                             │
-│ AppKit · Databricks Apps    │
-└─────────────────────────────┘
-```
+The Express server acts as the backend layer between the React frontend and the Databricks AI services.
 
 ---
 
 ## Project Goals
 
-The project explores the development of an AI assistant as a **Databricks application**, combining:
+The project demonstrates how a modern full-stack application can combine:
 
-* Modern React frontend development
-* Full-stack TypeScript
-* Express-based backend development
-* Databricks AppKit
-* Databricks application deployment
-* Environment-based configuration
-* Development and production workflows
+* React and TypeScript
+* Express APIs
+* Databricks Apps
+* Databricks Vector Search
+* Model Serving
+* AI Search
+* Retrieval-Augmented Generation
+* Source-aware AI responses
+* Infrastructure-as-code style deployment configuration
+
+The main focus is on building a practical AI assistant architecture that can be deployed and operated inside a Databricks environment.
 
 ---
 
-## Status
+## Current Status
 
 **Proof of Concept**
 
-The project is actively developed and serves as an implementation and exploration of an AI assistant running as a Databricks App.
+The application is currently a proof of concept demonstrating the integration of a full-stack web application with Databricks AI and data services.
+
+The architecture is designed to provide a foundation for further development, including improvements to retrieval quality, UI/UX, evaluation, observability, and production hardening.
 
 ---
 
@@ -322,4 +455,5 @@ The project is actively developed and serves as an implementation and exploratio
 
 **souldest**
 
-[GitHub](https://github.com/souldest)
+GitHub:
+https://github.com/souldest/bkk-ai-assistant
