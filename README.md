@@ -1,51 +1,155 @@
-# bkk-ai-assistant
+# BKK AI Assistant
 
-A Databricks App powered by [AppKit](https://developers.databricks.com/docs/appkit/v0/), featuring React, TypeScript, and Tailwind CSS.
+A full-stack AI assistant application built as a **Databricks App** using **Databricks AppKit, React, TypeScript, Express, and Tailwind CSS**.
 
-**Enabled plugins:**
-- **Server** -- Express HTTP server with static file serving and Vite dev mode
+The project combines a modern React frontend with an Express backend and is designed to run and be deployed within a Databricks workspace.
+
+## Tech Stack
+
+### Frontend
+
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
+* React Router
+* Radix UI
+* shadcn/ui
+
+### Backend
+
+* Node.js
+* Express
+* TypeScript
+
+### Platform & Deployment
+
+* Databricks
+* Databricks AppKit
+* Databricks Apps
+* Databricks Asset Bundles
+
+---
+
+## Project Structure
+
+```text
+bkk-ai-assistant/
+│
+├── client/
+│   ├── src/                 # React application
+│   └── public/              # Static assets
+│
+├── server/
+│   ├── server.ts            # Express server entry point
+│   └── routes/              # Backend routes
+│
+├── shared/                  # Shared types and definitions
+├── scripts/                 # Utility scripts
+│
+├── app.yaml                 # Databricks App configuration
+├── databricks.yml           # Databricks Asset Bundle configuration
+├── appkit.plugins.json      # AppKit plugin configuration
+│
+├── .env.example             # Environment variable template
+├── package.json
+└── README.md
+```
+
+---
 
 ## Prerequisites
 
-- Node.js v22+ and npm
-- Databricks CLI (for deployment)
-- Access to a Databricks workspace
+Before running the project locally, make sure you have:
 
-## Databricks Authentication
+* **Node.js v22+**
+* **npm**
+* **Databricks CLI**
+* Access to a **Databricks workspace**
 
-### Local Development
+---
 
-For local development, configure your environment variables by creating a `.env` file:
+## Getting Started
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment variables
+
+Create a local `.env` file from the provided template:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set the environment variables you need:
+Then configure the required environment variables.
+
+Example:
 
 ```env
 DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
 DATABRICKS_APP_PORT=8000
-# ... other environment variables, depending on the plugins you use
 ```
 
-### CLI Authentication
+Additional environment variables may be required depending on the enabled plugins and your Databricks configuration.
 
-The Databricks CLI requires authentication to deploy and manage apps. Configure authentication using one of these methods:
+---
 
-#### OAuth U2M
+## Development
 
-Interactive browser-based authentication with short-lived tokens:
+Start the application in development mode with hot reload:
+
+```bash
+npm run dev
+```
+
+The application will be available at the URL shown in the console.
+
+---
+
+## Production Build
+
+Build the frontend and backend for production:
+
+```bash
+npm run build
+```
+
+The build generates:
+
+```text
+dist/server.js
+client/dist/
+```
+
+Start the production application with:
+
+```bash
+npm start
+```
+
+---
+
+## Databricks Authentication
+
+The Databricks CLI requires authentication to deploy and manage applications.
+
+### OAuth U2M
+
+For interactive browser-based authentication:
 
 ```bash
 databricks auth login --host https://your-workspace.cloud.databricks.com
 ```
 
-This will open your browser to complete authentication. The CLI saves credentials to `~/.databrickscfg`.
+This opens the browser to complete authentication. The Databricks CLI stores the authentication configuration locally.
 
-#### Configuration Profiles
+### Configuration Profiles
 
-Use multiple profiles for different workspaces:
+Multiple workspaces can be configured using profiles:
 
 ```ini
 [DEFAULT]
@@ -57,75 +161,23 @@ client_id = prod-client-id
 client_secret = prod-client-secret
 ```
 
-Deploy using a specific profile:
+A specific profile can then be used for deployment:
 
 ```bash
 databricks bundle deploy --profile production
 ```
 
-**Note:** Personal Access Tokens (PATs) are legacy authentication. OAuth is strongly recommended for better security.
+> **Security:** Personal Access Tokens (PATs) are legacy authentication. OAuth is recommended for improved security.
 
-## Getting Started
+---
 
-### Install Dependencies
+## Deployment
 
-```bash
-npm install
-```
+The project uses **Databricks Asset Bundles** and **Databricks Apps** for deployment.
 
-### Development
+### Configure the bundle
 
-Run the app in development mode with hot reload:
-
-```bash
-npm run dev
-```
-
-The app will be available at the URL shown in the console output.
-
-### Build
-
-Build both client and server for production:
-
-```bash
-npm run build
-```
-
-This creates:
-
-- `dist/server.js` - Compiled server bundle
-- `client/dist/` - Bundled client assets
-
-### Production
-
-Run the production build:
-
-```bash
-npm start
-```
-
-## Code Quality
-
-There are a few commands to help you with code quality:
-
-```bash
-# Type checking
-npm run typecheck
-
-# Linting
-npm run lint
-npm run lint:fix
-
-# Formatting
-npm run format
-npm run format:fix
-```
-
-## Deployment with Databricks Asset Bundles
-
-### 1. Configure Bundle
-
-Update `databricks.yml` with your workspace settings:
+Update `databricks.yml` with your Databricks workspace:
 
 ```yaml
 targets:
@@ -134,47 +186,140 @@ targets:
       host: https://your-workspace.cloud.databricks.com
 ```
 
-Make sure to replace all placeholder values in `databricks.yml` with your actual resource IDs.
+Replace the placeholder values with your actual workspace and resource configuration.
 
-### 2. Deploy
+### Deploy the application
 
-Deploy and start the app with a single command:
+Deploy the application with:
 
 ```bash
 databricks apps deploy
 ```
 
-`databricks apps deploy` validates the project, deploys it, starts the app, and prints its URL.
+The deployment process validates the project, deploys the application, starts it, and outputs the application URL.
 
-### Deploy to Production
+### Production deployment
 
-1. Configure the production target in `databricks.yml`
-2. Deploy to production:
+Configure the production target in `databricks.yml` and deploy with:
 
 ```bash
 databricks apps deploy -t prod
 ```
 
-> **Restarting a stopped app:** apps stop after a period of inactivity. To start one again without redeploying, run `databricks apps start <APP_NAME>`.
+### Restart a stopped application
 
-## Project Structure
+Databricks Apps may stop after a period of inactivity.
 
-```
-* client/          # React frontend
-  * src/           # Source code
-  * public/        # Static assets
-* server/          # Express backend
-  * server.ts      # Server entry point
-  * routes/        # Routes
-* shared/          # Shared types
-* databricks.yml   # Bundle configuration
-* app.yaml         # App configuration
-* .env.example     # Environment variables example
+An existing application can be started again without redeploying:
+
+```bash
+databricks apps start <APP_NAME>
 ```
 
-## Tech Stack
+---
 
-- **Backend**: Node.js, Express
-- **Frontend**: React.js, TypeScript, Vite, Tailwind CSS, React Router
-- **UI Components**: Radix UI, shadcn/ui
-- **Databricks**: AppKit SDK
+## Code Quality
+
+The project includes scripts for type checking, linting, and formatting.
+
+### Type checking
+
+```bash
+npm run typecheck
+```
+
+### Linting
+
+```bash
+npm run lint
+```
+
+Automatically fix linting issues where possible:
+
+```bash
+npm run lint:fix
+```
+
+### Formatting
+
+```bash
+npm run format
+```
+
+Apply formatting automatically:
+
+```bash
+npm run format:fix
+```
+
+---
+
+## Enabled Plugins
+
+The project currently includes the following application component:
+
+### Server
+
+An **Express HTTP server** providing static file serving and Vite development mode.
+
+Additional AppKit plugins can be configured according to the project's Databricks environment.
+
+---
+
+## Architecture
+
+The application is structured as a full-stack web application:
+
+```text
+┌─────────────────────────────┐
+│       React Frontend        │
+│                             │
+│ TypeScript · Vite           │
+│ Tailwind · shadcn/ui        │
+└──────────────┬──────────────┘
+               │
+               │ HTTP / API
+               ▼
+┌─────────────────────────────┐
+│       Express Backend       │
+│                             │
+│ Node.js · TypeScript        │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│         Databricks          │
+│                             │
+│ AppKit · Databricks Apps    │
+└─────────────────────────────┘
+```
+
+---
+
+## Project Goals
+
+The project explores the development of an AI assistant as a **Databricks application**, combining:
+
+* Modern React frontend development
+* Full-stack TypeScript
+* Express-based backend development
+* Databricks AppKit
+* Databricks application deployment
+* Environment-based configuration
+* Development and production workflows
+
+---
+
+## Status
+
+**Proof of Concept**
+
+The project is actively developed and serves as an implementation and exploration of an AI assistant running as a Databricks App.
+
+---
+
+## Author
+
+**souldest**
+
+[GitHub](https://github.com/souldest)
