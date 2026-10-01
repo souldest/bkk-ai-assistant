@@ -1,129 +1,286 @@
-# BKK AI Assistant
+# BKK Mitarbeiter-Assistent
 
-A full-stack AI assistant application built as a **Databricks App** using **Databricks AppKit, React, TypeScript, Express, and Tailwind CSS**.
+A full-stack **Retrieval-Augmented Generation (RAG) assistant** for answering questions about internal BKK information.
 
-The project combines a modern React frontend with a TypeScript/Express backend and integrates **Databricks Vector Search, model serving endpoints, and a Retrieval-Augmented Generation (RAG) pipeline** to provide context-aware answers based on indexed documents.
+The application is implemented as a **Databricks App** using **Databricks AppKit, React, TypeScript, Express, Databricks Vector Search, Unity Catalog, Model Serving, and a MiniLM embedding model**.
 
-The application is designed to run and be deployed directly within a Databricks workspace.
+The goal of the proof of concept is to provide employees with concise answers that are grounded in the available BKK knowledge base and accompanied by the retrieved source documents.
 
 ---
 
-## AI & RAG Architecture
+## Demo
 
-The core of the application is a Retrieval-Augmented Generation pipeline implemented with Databricks services.
+### Frontend
 
-```text
-┌──────────────────────┐
-│     React Frontend   │
-│  TypeScript / Vite   │
-└──────────┬───────────┘
-           │ User Question
-           ▼
-┌──────────────────────┐
-│   Express Backend    │
-│  TypeScript / Node.js│
-└──────────┬───────────┘
-           │
-           ├──────────────────────────────┐
-           │                              │
-           ▼                              ▼
-┌──────────────────────┐      ┌─────────────────────────┐
-│ Databricks AppKit    │      │ MiniLM Embedding Model  │
-│ AI Search / Retrieval│      │ Serving Endpoint        │
-└──────────┬───────────┘      └────────────┬────────────┘
-           │                               │
-           │ Retrieved Context             │ Embeddings
-           └──────────────┬────────────────┘
-                          ▼
-               ┌─────────────────────────┐
-               │ Databricks GPT OSS 120B │
-               │ Model Serving Endpoint  │
-               └────────────┬────────────┘
-                            │
-                            ▼
-                  ┌───────────────────┐
-                  │ Answer + Sources  │
-                  └───────────────────┘
-```
+The deployed Databricks application provides a simple employee-facing interface for submitting questions and displaying grounded answers together with their sources.
 
-### RAG Pipeline
+![BKK Mitarbeiter-Assistent](docs/screenshots/03-frontend.png)
 
-1. **User question**
-   The user enters a question through the React frontend.
+### n8n Workflow
 
-2. **Document retrieval**
-   The Express backend sends the question to the Databricks AppKit AI Search service, which retrieves relevant document chunks from the configured Vector Search index.
+The project was also validated through an n8n-based AI/RAG workflow during development.
 
-3. **Embeddings**
-   The application integrates with the Databricks `minilm-embedding` serving endpoint for text embeddings.
+![n8n Workflow](docs/screenshots/01-n8n-workflow.png)
 
-4. **Context construction**
-   Retrieved document chunks are combined into a structured context for the language model.
+### Successful Execution
 
-5. **LLM generation**
-   The context and user question are sent to the `databricks-gpt-oss-120b` serving endpoint.
+The n8n workflow was successfully executed end-to-end.
 
-6. **Grounded response**
-   The model is instructed to answer based on the provided context and avoid inventing information that is not supported by the retrieved documents.
-
-7. **Sources**
-   The application returns source metadata together with the generated answer so that the user can see which document chunks contributed to the response.
+![Successful n8n Execution](docs/screenshots/02-successful-execution.png)
 
 ---
 
 ## Key Features
 
-* Full-stack React + Express application
-* TypeScript across frontend and backend
-* Databricks App deployment
+* Natural-language question answering in German
 * Retrieval-Augmented Generation (RAG)
-* Databricks Vector Search integration
-* Databricks AI Search / AppKit integration
-* MiniLM embedding model serving
-* Databricks GPT OSS 120B model serving
-* Context-grounded German responses
-* Source metadata displayed alongside answers
-* Explicit anti-hallucination prompt instructions
-* Databricks Asset Bundle configuration
-* Databricks App resource permissions
-* OAuth-based Databricks authentication support
+* Databricks Vector Search for semantic retrieval
+* MiniLM embeddings with **384 dimensions**
+* Databricks Model Serving for embeddings
+* Databricks-hosted LLM for answer generation
+* Unity Catalog integration
+* Source references shown in the frontend
+* Prompt constraints to reduce unsupported answers
+* Full-stack React + TypeScript + Express architecture
+* Deployment as a Databricks App
 
 ---
 
-## Tech Stack
+## Architecture
 
-### Frontend
+```text
+                          ┌───────────────────────┐
+                          │        Employee       │
+                          │                       │
+                          │  "Was ist Krankengeld?"│
+                          └───────────┬───────────┘
+                                      │
+                                      ▼
+                          ┌───────────────────────┐
+                          │    React Frontend     │
+                          │ TypeScript · Vite     │
+                          └───────────┬───────────┘
+                                      │
+                                      │ POST /api/ask
+                                      ▼
+                    ┌──────────────────────────────────┐
+                    │        Databricks App            │
+                    │                                  │
+                    │ Express + Databricks AppKit      │
+                    └───────────────┬──────────────────┘
+                                    │
+                    ┌───────────────┴────────────────┐
+                    │                                │
+                    ▼                                ▼
+        ┌──────────────────────┐          ┌──────────────────────┐
+        │   MiniLM Embedding   │          │  Databricks LLM      │
+        │   Model Serving      │          │  Model Serving       │
+        │   384 dimensions      │          │  GPT OSS 120B        │
+        └──────────┬───────────┘          └──────────▲───────────┘
+                   │                                 │
+                   ▼                                 │
+        ┌──────────────────────┐                     │
+        │  Databricks Vector   │                     │
+        │       Search         │                     │
+        │                      │                     │
+        │ document_chunks_     │                     │
+        │ index                │                     │
+        └──────────┬───────────┘                     │
+                   │                                 │
+                   │ Top 4 relevant chunks           │
+                   ▼                                 │
+        ┌──────────────────────┐                     │
+        │ BKK Knowledge Base   │─────────────────────┘
+        │ Unity Catalog        │
+        │ document_chunks      │
+        └──────────────────────┘
+```
 
-* React
-* TypeScript
-* Vite
-* Tailwind CSS
-* React Router
-* Radix UI
-* shadcn/ui
+---
 
-### Backend
+## RAG Pipeline
 
-* Node.js
-* Express
-* TypeScript
+The request processing flow is:
 
-### AI & Data
+```text
+Question
+   │
+   ▼
+Generate query embedding
+   │
+   ▼
+Databricks Vector Search
+   │
+   ▼
+Retrieve relevant BKK chunks
+   │
+   ▼
+Build constrained prompt
+   │
+   ▼
+Databricks LLM
+   │
+   ▼
+Answer + source references
+   │
+   ▼
+React Frontend
+```
 
-* Databricks Vector Search
-* Databricks AI Search / AppKit
-* Databricks Model Serving
-* MiniLM embeddings
-* Databricks GPT OSS 120B
-* Retrieval-Augmented Generation (RAG)
+### 1. User Question
 
-### Platform & Deployment
+The employee submits a natural-language question through the React frontend.
 
-* Databricks Apps
-* Databricks AppKit
-* Databricks Asset Bundles
-* Databricks CLI
-* Unity Catalog resources
+Example:
+
+```text
+Was ist Krankengeld?
+```
+
+### 2. Query Embedding
+
+The question is converted into a **384-dimensional vector** using the deployed MiniLM embedding model.
+
+### 3. Vector Search
+
+Databricks Vector Search queries:
+
+```text
+workspace.healthcare_ai.document_chunks_index
+```
+
+The application retrieves the most relevant chunks from the BKK knowledge base.
+
+### 4. Context Construction
+
+The retrieved chunks are inserted into a constrained prompt.
+
+The application instructs the LLM to:
+
+* use only the retrieved context
+* avoid inventing facts, amounts, deadlines, or requirements
+* avoid mixing unrelated BKK topics
+* explicitly state when the available information is insufficient
+* answer in German
+* keep the answer concise
+
+### 5. LLM Generation
+
+The contextualized prompt is sent to the Databricks LLM endpoint.
+
+### 6. Source Display
+
+The frontend displays both the generated answer and the retrieved source documents.
+
+Example:
+
+```text
+Antwort
+
+Krankengeld ist eine Leistung, die unter bestimmten
+Voraussetzungen nach dem Ende der Entgeltfortzahlung
+gewährt wird.
+
+Quellen
+
+DOC002
+DOC112
+DOC107
+DOC103
+```
+
+---
+
+## Databricks Resources
+
+The application currently uses the following Databricks resources.
+
+| Resource                   | Configuration                                    |
+| -------------------------- | ------------------------------------------------ |
+| Databricks App             | `bkk-ai-assistant`                               |
+| Vector Search Endpoint     | `bkk-ai-search`                                  |
+| Vector Search Index        | `workspace.healthcare_ai.document_chunks_index`  |
+| Source Table               | `workspace.healthcare_ai.document_chunks`        |
+| Embedding Model            | `workspace.healthcare_ai.minilm_embedding_model` |
+| Embedding Dimension        | 384                                              |
+| Embedding Serving Endpoint | `minilm-embedding`                               |
+| LLM Serving Endpoint       | `databricks-gpt-oss-120b`                        |
+| Retrieved Results          | 4 chunks per question                            |
+
+---
+
+## Data Layer
+
+The knowledge base is stored in Unity Catalog:
+
+```text
+workspace.healthcare_ai.document_chunks
+```
+
+The Vector Search index is:
+
+```text
+workspace.healthcare_ai.document_chunks_index
+```
+
+The current proof-of-concept index contains the BKK document chunks used for retrieval.
+
+The source table has **Change Data Feed enabled**, allowing it to be used with the Delta Sync Vector Search index.
+
+---
+
+## Security and Access Control
+
+The Databricks App runs with its own service principal.
+
+The application service principal is granted access to the required Databricks resources:
+
+```text
+Vector Search Index
+    SELECT
+
+Vector Search / Unity Catalog
+    USE_CATALOG
+    USE_SCHEMA
+
+Embedding Model Serving Endpoint
+    CAN_QUERY
+
+LLM Serving Endpoint
+    CAN_QUERY
+```
+
+Secrets and authentication credentials are not part of the frontend bundle.
+
+Local credentials should be stored only in environment configuration and should never be committed to Git.
+
+---
+
+## n8n Development Workflow
+
+During development, the RAG concept was also tested using an n8n workflow with Ollama.
+
+```text
+User Question
+     │
+     ▼
+    n8n
+     │
+     ▼
+AI Agent
+     │
+     ├──────────────► Ollama / qwen2.5:3b
+     │
+     ▼
+BKK RAG Search
+     │
+     ▼
+Databricks Knowledge Base
+```
+
+The n8n workflow was used to validate the orchestration and retrieval concept before completing the Databricks App deployment.
+
+The Databricks App is the deployed user-facing implementation.
 
 ---
 
@@ -131,323 +288,247 @@ The core of the application is a Retrieval-Augmented Generation pipeline impleme
 
 ```text
 bkk-ai-assistant/
+│
 ├── client/
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── App.tsx
-│       └── ...
+│   ├── src/                         # React frontend
+│   └── public/                      # Static assets
 │
 ├── server/
-│   └── server.ts
+│   └── server.ts                    # Express + RAG backend
 │
-├── app.yaml
-├── databricks.yml
+├── shared/                          # Shared application types
+│
+├── scripts/                         # Utility scripts
+│
+├── docs/
+│   └── screenshots/
+│       ├── 01-n8n-workflow.png
+│       ├── 02-successful-execution.png
+│       └── 03-frontend.png
+│
+├── app.yaml                         # Databricks App configuration
+├── databricks.yml                   # Databricks Asset Bundle configuration
+├── appkit.plugins.json              # AppKit plugin configuration
+├── .env.example                     # Environment configuration template
 ├── package.json
-├── README.md
-└── ...
+└── README.md
 ```
-
-### Main Components
-
-**`client/`**
-React frontend responsible for the user interface and interaction with the assistant.
-
-**`server/server.ts`**
-Express backend containing the AI/RAG integration, Databricks service calls, prompt construction, and API handling.
-
-**`databricks.yml`**
-Databricks Asset Bundle configuration, including application resources and required permissions.
-
-**`app.yaml`**
-Databricks App configuration and environment variables.
 
 ---
 
-## Databricks Resources
+## Technology Stack
 
-The application is configured to work with the following Databricks resources:
+### Frontend
 
-### Vector Search
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
+* shadcn/ui
+* Radix UI
 
-A Unity Catalog Vector Search index is used for document retrieval.
-
-```text
-workspace.healthcare_ai.document_chunks_index
-```
-
-The Databricks App is configured with the required `SELECT` permission for the resource.
-
-### Embedding Model
-
-The application uses the following Databricks Model Serving endpoint:
-
-```text
-minilm-embedding
-```
-
-The endpoint generates vector embeddings used by the retrieval pipeline.
-
-The current implementation expects **384-dimensional embeddings**.
-
-### Language Model
-
-The application uses:
-
-```text
-databricks-gpt-oss-120b
-```
-
-for response generation.
-
-The model receives the user's question together with retrieved document context and is instructed to remain grounded in that context.
-
----
-
-## Prerequisites
-
-Before running or deploying the application, make sure the following are available:
+### Backend
 
 * Node.js
+* Express
+* TypeScript
+* Databricks SDK
+* Databricks AppKit
+
+### AI / RAG
+
+* Databricks Vector Search
+* MiniLM embeddings
+* 384-dimensional embeddings
+* Databricks Model Serving
+* Databricks GPT OSS 120B
+* Unity Catalog
+
+### Deployment
+
+* Databricks Apps
+* Databricks Asset Bundles
+* Databricks CLI
+
+### Development / Orchestration
+
+* n8n
+* Ollama
+* qwen2.5:3b
+
+---
+
+## Local Development
+
+### Prerequisites
+
+* Node.js 22+
 * npm
 * Databricks CLI
 * Access to a Databricks workspace
-* Appropriate Databricks permissions
-* Configured Databricks authentication
-* Required Vector Search resources
-* Required Model Serving endpoints
 
----
-
-## Getting Started
-
-Clone the repository:
-
-```bash
-git clone https://github.com/souldest/bkk-ai-assistant.git
-cd bkk-ai-assistant
-```
-
-Install dependencies:
+### Install dependencies
 
 ```bash
 npm install
 ```
 
-Depending on the project configuration, frontend and backend dependencies are handled through the project scripts.
+### Configure environment
 
----
-
-## Databricks Authentication
-
-The application is intended to run within a Databricks environment and can use Databricks authentication mechanisms supported by the Databricks CLI and SDK.
-
-For local development, configure a Databricks CLI profile:
+Create a local environment file:
 
 ```bash
-databricks configure
+cp .env.example .env
 ```
 
-OAuth-based authentication is recommended for current Databricks workflows.
+Configure the required Databricks settings for the target workspace.
 
-Personal Access Tokens (PATs) are considered a legacy authentication approach and should generally be avoided for new setups where OAuth is available.
+Do **not** commit `.env` or credentials to Git.
 
----
-
-## Development
-
-Start the development environment using the configured npm scripts:
+### Development server
 
 ```bash
 npm run dev
 ```
 
-The development setup provides the frontend and backend required to run the application locally.
-
----
-
-## Production Build
-
-Create a production build with:
+### Production build
 
 ```bash
 npm run build
 ```
 
-The resulting application can then be deployed as a Databricks App.
-
----
-
-## Code Quality
-
-The project includes scripts for type checking, linting, and formatting.
-
-Typical commands include:
-
-```bash
-npm run typecheck
-npm run lint
-npm run format
-```
-
-These checks help maintain consistent TypeScript code quality across the frontend and backend.
-
----
-
-## Deployment
-
-The project uses **Databricks Asset Bundles** for deployment configuration.
-
-The deployment configuration is defined in:
+The production build generates:
 
 ```text
-databricks.yml
+dist/
+client/dist/
 ```
 
-Deploy the application with:
+---
+
+## Databricks Deployment
+
+The project uses Databricks Apps and Databricks Asset Bundles.
+
+### Deploy
 
 ```bash
 databricks apps deploy
 ```
 
-For a specific target:
+The deployment process validates the project, builds the application, uploads the source, and starts the Databricks App.
+
+### Start an existing App
 
 ```bash
-databricks apps deploy -t prod
+databricks apps start bkk-ai-assistant
 ```
 
-After deployment, an application can be restarted with:
+### Check App status
 
 ```bash
-databricks apps start <APP_NAME>
+databricks apps get bkk-ai-assistant
 ```
 
-The Databricks bundle configuration also defines the resources required by the application, including:
+### View application logs
 
-* Vector Search resources
-* Model Serving permissions
-* Databricks App configuration
+```bash
+databricks apps logs bkk-ai-assistant --tail-lines 50
+```
 
 ---
 
-## Application Architecture
+## Deployment Result
 
-The application follows a separation between presentation, backend orchestration, retrieval, and generation.
+The current proof-of-concept has been successfully deployed as a Databricks App.
+
+Current state:
 
 ```text
-                         User
-                          │
-                          ▼
-               ┌─────────────────────┐
-               │   React Frontend    │
-               │ TypeScript / Vite   │
-               └──────────┬──────────┘
-                          │
-                          │ HTTP
-                          ▼
-               ┌─────────────────────┐
-               │   Express Backend   │
-               │    server.ts        │
-               └──────────┬──────────┘
-                          │
-             ┌────────────┴────────────┐
-             │                         │
-             ▼                         ▼
-   ┌───────────────────┐    ┌────────────────────┐
-   │ AppKit AI Search  │    │ MiniLM Embeddings  │
-   │                   │    │ Model Serving      │
-   └─────────┬─────────┘    └────────────────────┘
-             │
-             │ Relevant chunks
-             ▼
-   ┌──────────────────────┐
-   │ Context + User Query │
-   └──────────┬───────────┘
-              │
-              ▼
-   ┌──────────────────────┐
-   │ GPT OSS 120B Serving │
-   │ Endpoint             │
-   └──────────┬───────────┘
-              │
-              ▼
-   ┌──────────────────────┐
-   │ Answer + Source Data │
-   └──────────────────────┘
+Application        RUNNING
+App Compute        ACTIVE
+Deployment         SUCCEEDED
+Vector Search      ONLINE
+Vector Index       READY
+Indexed Rows       18
 ```
 
-This architecture keeps the frontend focused on presentation while the backend coordinates retrieval, context preparation, model invocation, and response handling.
+The deployed application provides a working question-answering flow from the React frontend through the Databricks backend, vector retrieval, and LLM generation.
 
 ---
 
-## Prompt & Grounding Strategy
+## Current Limitations
 
-The backend uses a structured prompt designed for document-grounded responses.
+This repository represents a **proof of concept** rather than a production-ready healthcare application.
 
-The model is instructed to:
+Current limitations include:
 
-* Answer in German.
-* Use the retrieved context as the primary source of information.
-* Avoid fabricating information.
-* Clearly distinguish between information that is supported by the retrieved documents and information that is not available.
-* Keep different topics separated.
-* Provide an answer based on the available evidence rather than relying on unsupported assumptions.
+* limited knowledge-base size
+* limited evaluation dataset
+* no production authentication/authorization design
+* no comprehensive automated evaluation suite
+* no production monitoring and observability stack
+* no formal legal/compliance validation
+* no guarantee that every possible employee question can be answered from the available knowledge base
 
-This approach is intended to reduce hallucinations and make the generated responses more transparent and traceable.
-
----
-
-## Source Handling
-
-The application does not only return the generated answer.
-
-Retrieved source information is also passed back to the frontend and displayed to the user.
-
-The interface can show information such as:
-
-* Document ID
-* Retrieved chunk
-* Relevance information
-
-This provides additional transparency into the retrieval process and makes the RAG pipeline easier to inspect.
+The system is intentionally designed to prefer an explicit "insufficient information" response over unsupported answers.
 
 ---
 
-## Enabled Plugins
+## Possible Next Steps
 
-The project uses the following application plugin:
+Potential extensions include:
 
-* Express HTTP server
-
-The Express server acts as the backend layer between the React frontend and the Databricks AI services.
-
----
-
-## Project Goals
-
-The project demonstrates how a modern full-stack application can combine:
-
-* React and TypeScript
-* Express APIs
-* Databricks Apps
-* Databricks Vector Search
-* Model Serving
-* AI Search
-* Retrieval-Augmented Generation
-* Source-aware AI responses
-* Infrastructure-as-code style deployment configuration
-
-The main focus is on building a practical AI assistant architecture that can be deployed and operated inside a Databricks environment.
+* larger and continuously updated BKK knowledge bases
+* automated retrieval and answer evaluation
+* feedback collection from users
+* application telemetry and monitoring
+* stronger access-control integration
+* document ingestion pipelines
+* improved citation display
+* answer-quality benchmarks
+* production deployment architecture
 
 ---
 
-## Current Status
+## Screenshots
 
-**Proof of Concept**
+The GitHub repository contains the following implementation evidence:
 
-The application is currently a proof of concept demonstrating the integration of a full-stack web application with Databricks AI and data services.
+```text
+docs/screenshots/01-n8n-workflow.png
+docs/screenshots/02-successful-execution.png
+docs/screenshots/03-frontend.png
+```
 
-The architecture is designed to provide a foundation for further development, including improvements to retrieval quality, UI/UX, evaluation, observability, and production hardening.
+The frontend screenshot demonstrates the deployed assistant, including the generated response and retrieved source references.
+
+---
+
+## Project Status
+
+**Proof of Concept – successfully deployed on Databricks**
+
+The main end-to-end flow has been validated:
+
+```text
+React Frontend
+      │
+      ▼
+Databricks App
+      │
+      ▼
+Vector Search
+      │
+      ▼
+BKK Knowledge Base
+      │
+      ▼
+Databricks LLM
+      │
+      ▼
+Answer + Sources
+```
 
 ---
 
@@ -455,5 +536,4 @@ The architecture is designed to provide a foundation for further development, in
 
 **souldest**
 
-GitHub:
-https://github.com/souldest/bkk-ai-assistant
+[GitHub](https://github.com/souldest)

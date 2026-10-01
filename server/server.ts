@@ -4,6 +4,12 @@ import { WorkspaceClient } from '@databricks/sdk-experimental';
 
 const workspace = new WorkspaceClient({});
 
+const EMBEDDING_ENDPOINT =
+  process.env.DATABRICKS_EMBEDDING_ENDPOINT ?? 'minilm-embedding';
+
+const LLM_ENDPOINT =
+  process.env.DATABRICKS_LLM_ENDPOINT ?? 'databricks-gpt-oss-120b';
+
 type Match = {
   chunk_id: string;
   document_id: string;
@@ -78,7 +84,7 @@ ${context}
 
 async function getEmbedding(text: string): Promise<number[]> {
   const response = await workspace.servingEndpoints.query({
-    name: 'minilm-embedding',
+    name: EMBEDDING_ENDPOINT,
     dataframe_records: [{ text }],
   });
 
@@ -101,7 +107,7 @@ async function getEmbedding(text: string): Promise<number[]> {
 
 async function askLLM(prompt: string): Promise<string> {
   const response = await workspace.servingEndpoints.query({
-    name: 'databricks-gpt-oss-120b',
+    name: LLM_ENDPOINT,
     messages: [
       {
         role: 'user',

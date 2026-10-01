@@ -3,3 +3,8 @@ command: ['npm', 'run', 'start']
 env:
   - name: DATABRICKS_VS_INDEX_NAME
     valueFrom: vector-search-index
+
+  - name: DATABRICKS_EMBEDDING_ENDPOINT
+    valueFrom: minilm-embedding
+  - name: DATABRICKS_LLM_ENDPOINT
+    valueFrom: llm
