@@ -1,1 +1,5 @@
 command: ['npm', 'run', 'start']
+
+env:
+  - name: DATABRICKS_VS_INDEX_NAME
+    valueFrom: vector-search-index

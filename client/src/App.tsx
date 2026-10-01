@@ -108,19 +108,27 @@ function HomePage() {
             Quellen
           </h2>
 
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2">
             {sources.map((source) => (
               <li
                 key={`${source.document_id}-${source.chunk_id}`}
-                className="border rounded-md px-3 py-2"
+                className="border rounded-md px-3 py-3"
               >
-                <strong>{source.document_id}</strong>
-                <span className="opacity-70"> · {source.chunk_id}</span>
-                {typeof source.score === 'number' && (
-                  <span className="ml-2 opacity-60">
-                    · Relevanz: {source.score.toFixed(3)}
-                  </span>
-                )}
+                <div className="font-medium">
+                  {source.document_id}
+                </div>
+
+                <div className="mt-1 text-sm opacity-70">
+                  {source.chunk_id}
+                  {typeof source.score === 'number' && (
+                    <>
+                      {' · '}Relevanz:{' '}
+                      <span className="font-medium opacity-100">
+                        {source.score.toFixed(3)}
+                      </span>
+                    </>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

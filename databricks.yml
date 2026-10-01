@@ -8,12 +8,23 @@ resources:
       description: "A Databricks App powered by AppKit"
       source_code_path: ./
 
-      # Start the app automatically on deploy.
       lifecycle:
         started: true
-      # Uncomment to enable on behalf of user API scopes. Available scopes: sql, dashboards.genie, files.files, serving.serving-endpoints
-      # user_api_scopes:
-      #   - sql
+
+      resources:
+        - name: "vector-search-index"
+          uc_securable:
+            securable_type: "TABLE"
+            securable_full_name: "workspace.healthcare_ai.document_chunks_index"
+            permission: "SELECT"
+        - name: "minilm-embedding"
+          serving_endpoint:
+            name: "minilm-embedding"
+            permission: "CAN_QUERY"
+        - name: "llm"
+          serving_endpoint:
+            name: "databricks-gpt-oss-120b"
+            permission: "CAN_QUERY"
 
 targets:
   default:
